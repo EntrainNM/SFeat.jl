@@ -1,3 +1,4 @@
 # SFeat
 
-[![Build Status](https://travis-ci.com/EntrainNMSU/SFeat.jl.svg?branch=main)](https://travis-ci.com/EntrainNMSU/SFeat.jl)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://entrainnm.github.io/SFeat.jl/dev/)
+
