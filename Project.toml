@@ -3,6 +3,10 @@ uuid = "50947f9d-e2fc-43d5-afd8-eae7f8ef8f4c"
 authors = ["Hasan Al-shammari"]
 version = "0.1.0"
 
+[deps]
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
+
 [compat]
 julia = "1"
 

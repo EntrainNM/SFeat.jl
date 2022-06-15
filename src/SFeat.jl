@@ -1,5 +1,6 @@
 module SFeat
 
-# Write your package code here.
+include("./prattFeatures.jl")
+export feature, command
 
 end
