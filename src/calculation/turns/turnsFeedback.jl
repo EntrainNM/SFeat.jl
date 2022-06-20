@@ -4,7 +4,7 @@
 using TextGrid, Plots
 # path to transcribed TextGrid file
 # CASD019_07182019_Transcribed 80 entrainment
-file = raw"C:\Users\hemad\Desktop\Master\calculation\WPM\AdultAnnotated\A031_Sarah_Transcribed.TextGrid"
+file = raw"C:\Users\hemad\Desktop\Master\calculation\WPM\AdultAnnotated\A010_A011_Transcribed.TextGrid"
 interval = extract(file)
 
 
@@ -119,7 +119,7 @@ We also set ΔS2S1=(S1 - S2Prev) (does S1 gain or lose WPM from the last S2 segm
 
 ★ if ΔS2 & ΔS2S1 have the same sign (+ or -) ==> S2's entrainment converging
 
-★ if ΔS2 & ΔS2S1 have the same sign (+ or -) ==> S2's entrainment diverging
+★ if ΔS2 & ΔS2S1 have the different sign ==> S2's entrainment diverging
 """
 # comparing previous turns
 prevS1WPM, prevS2WPM = 0.0, 0.0
