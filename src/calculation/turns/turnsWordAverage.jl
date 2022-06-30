@@ -2,9 +2,10 @@
 # plot WPM for each speaker along with a moving average (averag over 5-segemnt intervals)
 
 using TextGrid, Plots
+default(dpi=300)
 # path to transcribed TextGrid file
 
-file = raw"C:\Users\hemad\Desktop\Master\calculation\WPM\AdultAnnotated\A029_Transcribed.TextGrid"
+file = raw"C:\Users\hemad\Desktop\Master\ExtractFeatures\Before_After_Finished\CASD005_MAW_thesis_session_2\CASD005_MAW_thesis_session_2.TextGrid"
 interval = extract(file)
 
 
@@ -16,14 +17,14 @@ interval = extract(file)
 # when is S1 speaking
 S1Location = [("S1" in interval[1][i]) for i in 1:length(interval[1])]
 timedWords = Vector{Vector{Any}}(undef,length(interval[1]))
-# skip <1.0s segments
-minSegment = 0.5
+# skip <0.2s chunks
+minSegment = 0.2
 for i in 1:length(S1Location)
     test = 0
     endStamp = []
     for n in 1:length(interval[10])
-        #  (if word ends withing S1 ith segment)                                             & (segment is longer than 1 second)
-        if ((interval[1][i][1]<interval[10][n][2]) & (interval[10][n][2]<interval[1][i][2])) & ((interval[1][i][2]-interval[1][i][1]) > minSegment)
+        #  (if word ends withing S1 ith segment)                                             & (segment is longer than 0.2 second)                  # word segment not empty
+        if ((interval[1][i][1]<interval[10][n][2]) & (interval[10][n][2]<interval[1][i][2])) & ((interval[1][i][2]-interval[1][i][1]) > minSegment) & !isempty(interval[10][n][3])
             test += 1
             append!( endStamp, interval[10][n][2] )
         # else
@@ -36,6 +37,9 @@ end
 # [S1 location, start, end, # of words, [words end timestamps], speaker # (1 or 2)]
 S1Words = timedWords[S1Location]
 
+
+
+
 #------------------------------------------------ S2
 S2Location = [("S2" in interval[5][i]) for i in 1:length(interval[5])]
 timedWords = Vector{Vector{Any}}(undef,length(interval[5]))
@@ -44,7 +48,7 @@ for i in 1:length(S2Location)
     endStamp = []
     for n in 1:length(interval[11])
         # if word ends withing S2 ith segment
-        if ((interval[5][i][1]<interval[11][n][2]) & (interval[11][n][2]<interval[5][i][2])) & ((interval[5][i][2]-interval[5][i][1]) > minSegment)
+        if ((interval[5][i][1]<interval[11][n][2]) & (interval[11][n][2]<interval[5][i][2])) & ((interval[5][i][2]-interval[5][i][1]) > minSegment) & !isempty(interval[11][n][3])
             test += 1
             append!( endStamp, interval[11][n][2] )
         end
@@ -102,61 +106,55 @@ for i in 1:length(orderedTurns)
     end
 end
 
-# using Polynomials
-# deg = 6
-# testx = collect(1:length(plot1))[plot1.!=0]
-# testy = plot1[plot1.!=0]
-# f2 = fit(float(testx), float.(testy), deg)
-# plot(f2, extrema(testx)..., label = false,lw=4,seriescolor=RGB{Float64}(0.95,0.2,0.1))
-
 plot(collect(1:length(plot1))[plot1.!=0],plot1[plot1.!=0],background_color=RGB{Float64}(0.466,0.117,0.560),
      foreground_color=:white,
      seriescolor=RGB{Float64}(0.95,0.2,0.1),
      xguide="turns",
-     yguide="WPS",
-     label="S1 turns WPS"
+     yguide="WPM",
+     label="S1 turns WPM"
      )
 scatter!(collect(1:length(plot1))[plot1.!=0],plot1[plot1.!=0],background_color=RGB{Float64}(0.466,0.117,0.560),
         foreground_color=:white, label=false,
         seriescolor=RGB{Float64}(0.95,0.2,0.1))
 
 #
+
+
+# averaged line
+using Statistics
 temp1 = collect(1:length(plot1))[plot1.!=0]
 temp2 = plot1[plot1.!=0]
+average_interval = 2 # how many data points to average on the plot
 
-# plot(temp1,temp2)
-using Statistics
-ave1 = Array{Float64}(undef, trunc(Int,length(temp2)/5))
-axe1 = Array{Float64}(undef, trunc(Int,length(temp1)/5))
+ave1 = Array{Float64}(undef, trunc(Int,length(temp2)/ average_interval ))
+axe1 = Array{Float64}(undef, trunc(Int,length(temp1)/ average_interval ))
 for i in 1:length(ave1)
-    ave1[i] = mean(temp2[5*(i-1)+1:5*(i)+1])
-    axe1[i] = mean(temp1[5*(i-1)+1:5*(i)+1])
+    ave1[i] = mean(temp2[ average_interval *(i-1)+1 : average_interval *(i)])
+    axe1[i] = mean(temp1[ average_interval *(i-1)+1 : average_interval *(i)])
 end
 plot!(axe1,ave1,label = false,lw=4,seriescolor=RGB{Float64}(0.95,0.2,0.1))
 
-# using Polynomials
-# testx = collect(1:length(plot2))[plot2.!=0]
-# testy = plot2[plot2.!=0]
-# f2 = fit(float(testx), float.(testy), deg)
-# plot!(f2, extrema(testx)..., label = false,lw=4,seriescolor=RGB{Float64}(0.1,0.6,0.9))
+
 
 plot!(collect(1:length(plot2))[plot2.!=0],
-      plot2[plot2.!=0], label="S2 turns WPS",
+      plot2[plot2.!=0], label="S2 turns WPM",
       seriescolor=RGB{Float64}(0.1,0.6,0.9))
 scatter!(collect(1:length(plot2))[plot2.!=0],
         plot2[plot2.!=0], label=false,
         seriescolor=RGB{Float64}(0.1,0.6,0.9))
 
+# averaged line
+using Statistics
 temp1 = collect(1:length(plot2))[plot2.!=0]
 temp2 = plot2[plot2.!=0]
-using Statistics
-ave2 = Array{Float64}(undef, trunc(Int,length(temp2)/5))
-axe2 = Array{Float64}(undef, trunc(Int,length(temp1)/5))
+
+ave2 = Array{Float64}(undef, trunc(Int,length(temp2)/ average_interval ))
+axe2 = Array{Float64}(undef, trunc(Int,length(temp1)/ average_interval ))
 for i in 1:length(ave2)
-    ave2[i] = mean(temp2[5*(i-1)+1:5*(i)+1])
-    axe2[i] = mean(temp1[5*(i-1)+1:5*(i)+1])
+    ave2[i] = mean(temp2[ average_interval *(i-1)+1 : average_interval *(i)])
+    axe2[i] = mean(temp1[ average_interval *(i-1)+1 : average_interval *(i)])
 end
 
 plot!(axe2,ave2,label = false,lw=4,seriescolor=RGB{Float64}(0.1,0.6,0.9))
 
-# cor(ave1, ave2)
+# savefig(file[begin:findlast('\\',file)]*"averaged_line"*".png")

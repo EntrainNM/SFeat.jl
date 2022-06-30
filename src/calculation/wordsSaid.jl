@@ -1,5 +1,5 @@
 using TextGrid
-file = raw"C:\Users\hemad\Desktop\Master\Azure\Transcriptions\calculation\WPM\A026\A026_Transcribed.TextGrid"
+file = raw"C:\Users\hemad\Desktop\Master\ExtractFeatures\Before_After_Finished\CASD001_MAW_thesis_session_1\CASD001_MAW_thesis_session_1_Transcribed.TextGrid"
 interval = extract(file)
 
 #-------------- accociate speaker segments with words
@@ -115,4 +115,4 @@ plot!(collect(1:length(plot2))[plot2.!=0],
 
 plot!(yticks=0:2:maximum(maximum.([plot1,plot2])))
 
-savefig(raw"C:\Users\hemad\Desktop\Master\Azure\Transcriptions\calculation\WPM\A026\WPM.png")
+# savefig(raw"C:\Users\hemad\Desktop\Master\Azure\Transcriptions\calculation\WPM\A026\WPM.png")

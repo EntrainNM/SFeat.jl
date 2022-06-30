@@ -1,6 +1,6 @@
 module SFeat
 
 include("./prattFeatures.jl")
-export feature, command
+export feature, command, readFeature
 
 end
