@@ -59,10 +59,10 @@ end
 
 
 """
-Given a .features file, convert string lines to readable data of fleat type
+Given a .features file, convert string lines to readable data of Float type
 """
 function readFeature(file)
-    temp = DelimitedFiles.readdlm(raw"C:\Users\hemad\.julia\dev\SFeat\src\extraFiles\Temp.features") # this contains strings, commas, and numbers
+    temp = DelimitedFiles.readdlm(file) # this contains strings, commas, and numbers
     for i in eachindex(temp)
            if(typeof(temp[i]) == SubString{String})
                temp[i] = parse(Float64,replace(temp[i], ","=>""))

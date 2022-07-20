@@ -1,12 +1,15 @@
 
 # plot WPM for each speaker along with a moving average (averag over 5-segemnt intervals)
 
-using TextGrid, Plots
+using SFeat, TextGrid
+using Plots
 default(dpi=300)
 # path to transcribed TextGrid file
+parentFolder = raw"C:\Users\hemad\Desktop\Master\ExtractFeatures\Before_After_Finished\CASD001_MAW_thesis_session_1\CASD001_MAW_thesis_session_1.TextGrid"
 
-file = raw"C:\Users\hemad\Desktop\Master\ExtractFeatures\Before_After_Finished\CASD005_MAW_thesis_session_2\CASD005_MAW_thesis_session_2.TextGrid"
-interval = extract(file)
+# TextGridFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".TextGrid" # path to TextGrid file
+interval = extract(parentFolder)
+
 
 
 #-------------- accociate speaker segments with words
@@ -15,146 +18,79 @@ interval = extract(file)
 # eventaully, I will use S1Words variable to find the number of words said by S1 in time segments (5s, 10s,...)
 
 # when is S1 speaking
-S1Location = [("S1" in interval[1][i]) for i in 1:length(interval[1])]
-timedWords = Vector{Vector{Any}}(undef,length(interval[1]))
-# skip <0.2s chunks
-minSegment = 0.2
-for i in 1:length(S1Location)
-    test = 0
-    endStamp = []
-    for n in 1:length(interval[10])
-        #  (if word ends withing S1 ith segment)                                             & (segment is longer than 0.2 second)                  # word segment not empty
-        if ((interval[1][i][1]<interval[10][n][2]) & (interval[10][n][2]<interval[1][i][2])) & ((interval[1][i][2]-interval[1][i][1]) > minSegment) & !isempty(interval[10][n][3])
-            test += 1
-            append!( endStamp, interval[10][n][2] )
-        # else
-        #     println(interval[10][i])
-        end
-    end
-    # S1Location[i] ? println("S1 has ",test," words") : nothing
-    timedWords[i] = [i,interval[1][i][1],interval[1][i][2],test,endStamp,1]
+S1Words = wordSegments(interval, 1)
+
+S1WPM = Vector{Float64}(undef,length(S1Words)) # initalize 1D array to store averaged WPM for each S1 segment
+S1time = Vector{Float64}(undef,length(S1Words)) # initalize 1D array to store averaged time for each S1 segment
+# for each S1 segment, calaculate the average F0 (filtering 0.0 out) and store them on S1F0Averaged
+for i in 1:length(S1WPM) # for each S1 segment
+
+    S1WPM[i] = S1Words[i][4] / (S1Words[i][3] - S1Words[i][2]) * 60.0
+
+    S1time[i] = S1Words[i][2] + (S1Words[i][3] - S1Words[i][2]) / 2.0
 end
-# [S1 location, start, end, # of words, [words end timestamps], speaker # (1 or 2)]
-S1Words = timedWords[S1Location]
 
+S1Data = S1WPM[S1WPM.!=0.0]# filter out zeros
+S1Time = S1time[S1WPM.!=0.0]
+plot(S1Time, S1Data,
+     background_color=RGB{Float64}(0.466,0.117,0.560),
+     foreground_color=:white,
+     seriescolor=RGB{Float64}(0.95,0.2,0.1),
+     xguide="Seconds",
+     yguide="WPM",
+     label="S1 Turns WPM"
+     )
 
+scatter!(S1Time, S1Data,
+         background_color=RGB{Float64}(0.466,0.117,0.560),
+         foreground_color=:white, label=false,
+         seriescolor=RGB{Float64}(0.95,0.2,0.1)
+         )
 
 
 #------------------------------------------------ S2
-S2Location = [("S2" in interval[5][i]) for i in 1:length(interval[5])]
-timedWords = Vector{Vector{Any}}(undef,length(interval[5]))
-for i in 1:length(S2Location)
-    test = 0
-    endStamp = []
-    for n in 1:length(interval[11])
-        # if word ends withing S2 ith segment
-        if ((interval[5][i][1]<interval[11][n][2]) & (interval[11][n][2]<interval[5][i][2])) & ((interval[5][i][2]-interval[5][i][1]) > minSegment) & !isempty(interval[11][n][3])
-            test += 1
-            append!( endStamp, interval[11][n][2] )
-        end
-    end
-    timedWords[i] = [i,interval[5][i][1],interval[5][i][2],test,endStamp,2]
-end
-# [S2 location, start, end, # of words, [words end timestamps], speaker # (1 or 2)]
-S2Words = timedWords[S2Location]
+S2Words = wordSegments(interval, 2)
 
-#----------- words end stamps of S1: store the end time of each words S1 said
-endStampsS1 = []
-for i in 1:length(S1Words)
-    for n in 1:length(S1Words[i][5])
-        append!(endStampsS1,S1Words[i][5][n])
-    end
-end
-endStampsS1
+S2WPM = Vector{Float64}(undef,length(S2Words)) # initalize 1D array to store averaged WPM for each S2 segment
+S2time = Vector{Float64}(undef,length(S2Words)) # initalize 1D array to store averaged time for each S2 segment
+# for each S2 segment, calaculate the average F0 (filtering 0.0 out) and store them on S2F0Averaged
+for i in 1:length(S2WPM) # for each S2 segment
 
-#--------------- experiment 1: extracting WPS for S1 (turn taking)
-# for each turn (S1 segment) calaculate WPS for that segment
+    S2WPM[i] = S2Words[i][4] / (S2Words[i][3] - S2Words[i][2]) * 60.0
 
-# collect S1 and S2 segments together and sort by "start segment"
-turns = S1Words
-append!(turns,S2Words)
+    S2time[i] = S2Words[i][2] + (S2Words[i][3] - S2Words[i][2]) / 2.0
 
-# sort turns according to start time
-p = sortperm([i[2] for i in turns])
-temp = turns[p]
-orderedTurns = temp
-
-# remove turn if doesn't contain transcribed words
-for i in length(temp):-1:1
-    if temp[i][4]==0
-        deleteat!(orderedTurns,i)
-    end
 end
 
-orderedTurns[5]
-orderedTurns[5][3]-orderedTurns[5][2]
-
-plot1 = []
-plot2 = []
-plotAll = []
-
-for i in 1:length(orderedTurns)
-    # IntervalNumberofWords ÷ (endTime - startTime of interval in seconds) * 60seconds ÷ 1minute
-    temp = orderedTurns[i][4]/(orderedTurns[i][3]-orderedTurns[i][2]) * 60
-    append!(plotAll,temp)
-    if orderedTurns[i][6] == 1
-        append!(plot1,temp)
-        append!(plot2,0)
-    else
-        append!(plot1,0)
-        append!(plot2,temp)
-    end
-end
-
-plot(collect(1:length(plot1))[plot1.!=0],plot1[plot1.!=0],background_color=RGB{Float64}(0.466,0.117,0.560),
-     foreground_color=:white,
-     seriescolor=RGB{Float64}(0.95,0.2,0.1),
-     xguide="turns",
+S2Data = S2WPM[S2WPM.!=0.0]# filter out zeros
+S2Time = S2time[S2WPM.!=0.0]
+plot!(S2Time, S2Data,
+     seriescolor=RGB{Float64}(0.1,0.6,0.9),
+     xguide="Seconds",
      yguide="WPM",
-     label="S1 turns WPM"
+     label="S2 Turns WPM"
      )
-scatter!(collect(1:length(plot1))[plot1.!=0],plot1[plot1.!=0],background_color=RGB{Float64}(0.466,0.117,0.560),
-        foreground_color=:white, label=false,
-        seriescolor=RGB{Float64}(0.95,0.2,0.1))
 
+scatter!(S2Time, S2Data,
+         seriescolor=RGB{Float64}(0.1,0.6,0.9),
+         label=false
+         )
+
+# #  ----------------------------------- storing files
+# # create directoty to store data in for WPM
+# if !("WPM" in readdir(parentFolder))
+#     mkdir(parentFolder*raw"\WPM")
+# end
 #
-
-
-# averaged line
-using Statistics
-temp1 = collect(1:length(plot1))[plot1.!=0]
-temp2 = plot1[plot1.!=0]
-average_interval = 2 # how many data points to average on the plot
-
-ave1 = Array{Float64}(undef, trunc(Int,length(temp2)/ average_interval ))
-axe1 = Array{Float64}(undef, trunc(Int,length(temp1)/ average_interval ))
-for i in 1:length(ave1)
-    ave1[i] = mean(temp2[ average_interval *(i-1)+1 : average_interval *(i)])
-    axe1[i] = mean(temp1[ average_interval *(i-1)+1 : average_interval *(i)])
-end
-plot!(axe1,ave1,label = false,lw=4,seriescolor=RGB{Float64}(0.95,0.2,0.1))
-
-
-
-plot!(collect(1:length(plot2))[plot2.!=0],
-      plot2[plot2.!=0], label="S2 turns WPM",
-      seriescolor=RGB{Float64}(0.1,0.6,0.9))
-scatter!(collect(1:length(plot2))[plot2.!=0],
-        plot2[plot2.!=0], label=false,
-        seriescolor=RGB{Float64}(0.1,0.6,0.9))
-
-# averaged line
-using Statistics
-temp1 = collect(1:length(plot2))[plot2.!=0]
-temp2 = plot2[plot2.!=0]
-
-ave2 = Array{Float64}(undef, trunc(Int,length(temp2)/ average_interval ))
-axe2 = Array{Float64}(undef, trunc(Int,length(temp1)/ average_interval ))
-for i in 1:length(ave2)
-    ave2[i] = mean(temp2[ average_interval *(i-1)+1 : average_interval *(i)])
-    axe2[i] = mean(temp1[ average_interval *(i-1)+1 : average_interval *(i)])
-end
-
-plot!(axe2,ave2,label = false,lw=4,seriescolor=RGB{Float64}(0.1,0.6,0.9))
-
-# savefig(file[begin:findlast('\\',file)]*"averaged_line"*".png")
+# # save plot to WPM directory
+# image = parentFolder*raw"\WPM\WPM"*".png"
+# savefig(image)
+#
+# # save data to CSV file
+# csv_file = parentFolder*raw"\WPM\WPM_CVS_"
+#
+# S1CSV = DataFrame([S1Time, S1Data], [:S1Time, :S1])
+# S2CSV = DataFrame([S2Time, S2Data], [:S2Time, :S2])
+# # CSV.write(csv_file, [S1data S2data])
+# CSV.write(csv_file*"S1.csv", S1CSV)
+# CSV.write(csv_file*"S2.csv", S2CSV)
