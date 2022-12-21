@@ -2,15 +2,14 @@
 # plot WPM for each speaker along with a moving average (averag over 5-segemnt intervals)
 
 using SFeat, TextGrid, Plots
+default(dpi=300)
 # path to transcribed TextGrid file
-cd(raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Children\CNT_NEW_Finished")
+cd(raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Adults\Adults_Finished")
 folders = readdir(join=true)
 
-# S2toS1 = []
-# S1toS2 = []
+average = []
 for folder in folders
     file = folder*folder[findlast("\\",folder)[1] : end]*".TextGrid"
-
     interval = extract(file)
 
     # when is S1 speaking, get words teir information
@@ -29,7 +28,7 @@ for folder in folders
     # sort turns according to start time
     p = sortperm([i[2] for i in turns])
     temp = turns[p]
-    orderedTurns = temp
+    orderedTurns = temp # S1 and S2 combined
 
     # remove turn if doesn't contain transcribed words
     for i in length(temp):-1:1
@@ -47,6 +46,8 @@ for folder in folders
 
     #----------------------------------
     # combine consecutive speakers
+    orderedTurns
+
     i=0
     while (i <= length(orderedTurns))
         i+=1
@@ -66,18 +67,6 @@ for folder in folders
         end
     end
 
-
-
-    """
-    Looking at speaker 1 (S1) we calculcate ΔS2=(S2Next - S2Prev) (does S2 gain or lose WPM
-    from the last S2 segments?)
-
-    We also set ΔS2S1=(S1 - S2Prev) (does S1 gain or lose WPM from the last S2 segment?)
-
-    ★ if ΔS2 & ΔS2S1 have the same sign (+ or -) ==> S2's entrainment converging
-
-    ★ if ΔS2 & ΔS2S1 have the different sign ==> S2's entrainment diverging
-    """
     # comparing previous turns - S2 based on S1
     prevS1WPM, prevS2WPM = 0.0, 0.0
     prevS1WPM
@@ -95,6 +84,7 @@ for folder in folders
 
                 # println("Current ",orderedTurns[i][6]," WPM = ", S1," previous ",orderedTurns[i-1][6]," WPM = ", S2Prev, " Next ", orderedTurns[i+1][6]," WPM = ", S2Next)
 
+                # println(orderedTurns[i][6] , S1, )
                 # ΔS2 tells if S2 increased or decresed WPM from last S2 segment
                 append!(ΔS2, sign(S2Next - S2Prev))
                 # ΔS2S1 tells if S1 increased or decresed from previous S2
@@ -106,68 +96,29 @@ for folder in folders
             end
     end
 
-    for i in 1:length(ΔS2)
+    # for i in 1:length(ΔS2)
         # println("ΔS2 = ", ΔS2[i], " ΔS2S1 = ", ΔS2S1[i], " Results: ", (ΔS2[i]*ΔS2S1[i]))
-    end
+    # end
 
     test = ΔS2.*ΔS2S1
-    prob1 = sum(test[test.>0.0]) / length(test)
+    prob = sum(test[test.>0.0]) / length(test)
 
     print(file[findlast("\\",file)[1]+1:end], " Results: \n")
-    println("S2 entrained to S1 ",100.0*prob1,"% of the time")
+    println("S2 entrained to S1 ",100.0*prob,"% of the time")
 
-
-
-
-
-    # ------------------------------------------------ S1 based on S2
-    """
-    Same thing but for S1 based on S2
-    """
-    # comparing previous turns - S1 based on S2
-    prevS1WPM, prevS2WPM = 0.0, 0.0
-    prevS1WPM
-    ΔS1 = []
-    ΔS1S2 = []
-
-    # assuming there is no consecutive speakers (S1 alwasy followed by S2 segment)
-    for i in 2:length(orderedTurns)
-        try
-
-            if orderedTurns[i][6] == "S2" # if S1 segment
-                S1Prev = round(orderedTurns[i-1][7],digits=3)
-                S2 = round(orderedTurns[i][7],digits=3)
-                S1Next = round(orderedTurns[i+1][7],digits=3)
-
-                # println("Current ",orderedTurns[i][6]," WPM = ", S2," previous ",orderedTurns[i-1][6]," WPM = ", S1Prev, " Next ", orderedTurns[i+1][6]," WPM = ", S1Next)
-
-                # ΔS2 tells if S2 increased or decresed WPM from last S2 segment
-                append!(ΔS1, sign(S1Next - S1Prev))
-                # ΔS2S1 tells if S1 increased or decresed from previous S2
-                append!(ΔS1S2, sign(S2 - S1Prev))
-            end
-            catch
-                # println("Skip!")
-                nothing
-            end
-    end
-
-    for i in 1:length(ΔS1)
-        # println("ΔS1 = ", ΔS1[i], " ΔS1S2 = ", ΔS1S2[i], " Results: ", (ΔS1[i]*ΔS1S2[i]))
-    end
-
-    test = ΔS1.*ΔS1S2
-    prob2 = sum(test[test.>0.0]) / length(test)
-
-    print("")
-    print("S1 entrained to S2 ")
-
-    println(100.0*prob2,"% of the time\n")
-
-    # append!(S2toS1, [100.0*prob1])
-    # append!(S1toS2, [100.0*prob2])
+    append!(average, 100.0*prob)
 end
 
-
-# sum(S2toS1[15:end]) / length(S2toS1[15:end])
-# sum(S1toS2[15:end]) / length(S1toS2[15:end])
+# group = "Adults"
+# plot(average,
+#     background_color=RGB{Float64}(0.466,0.117,0.560),
+#     foreground_color=:white,
+#     seriescolor=RGB{Float64}(0.95,0.2,0.1),
+#     w=3,
+#      xguide="Audio #",
+#      label="S2 entrainment to S1",
+#      title=group,
+#      ylims=[0,100]
+#      )
+#
+# savefig(raw"C:\Users\hemad\Desktop\Master\Experiments\Exp2\Adults.png")

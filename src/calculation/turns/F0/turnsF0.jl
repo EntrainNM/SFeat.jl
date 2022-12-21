@@ -1,5 +1,7 @@
 
-using SFeat, TextGrid, Plots, CSV, DataFrames
+using SFeat, TextGrid, Plots#, CSV, DataFrames
+
+default(dpi=200)
 
 """
 After extracting featurs using the feature() function, we plot the average F0 for each speaker turn for further analysis.
@@ -12,9 +14,10 @@ F0 = map(x -> parse(Float64,x[begin:end-1]),test[:,4])
 # second method
 features = readFeature(featureFile)
 """
-parentFolder = raw"C:\Users\hemad\Desktop\Master\ExtractFeatures\Before_After_Finished\CASD001_MAW_thesis_session_1"
-
-featureFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".features" # path .features file
+parentFolder = raw"C:\Users\hemad\Desktop\Master\ExtractFeatures\Before_After_Files_new\CASD001_MAW_thesis_session_1"
+S1 = "female"
+S1 = "male"
+featureFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*"$gender.features" # path .features file
 features = readFeature(featureFile) # read features
 t = features[:,1]
 F0 = features[:,3]
@@ -120,7 +123,7 @@ S2Data = S2F0Averaged[S2F0Averaged.!=0]
 plot!(S2Time, S2Data,
      seriescolor=RGB{Float64}(0.1,0.6,0.9),
      xguide="Seconds",
-     yguide="F0",
+     yguide="F0 ($gender settings)",
      label="S2 average F0"
      )
 
@@ -130,37 +133,38 @@ scatter!(S2Time, S2Data,
          label=false
          )
 
-# averaged line
-# using Statistics
-# ave2 = Array{Float64}(undef, trunc(Int,length(S2Data)/ average_interval ))
-# axe2 = Array{Float64}(undef, trunc(Int,length(S2Time)/ average_interval ))
-# for i in 1:length(ave2)
-#     ave2[i] = mean(S2Data[ average_interval *(i-1)+1 : average_interval *(i)])
-#     axe2[i] = mean(S2Time[ average_interval *(i-1)+1 : average_interval *(i)])
+# if @isdefined averline
+#     # averaged line
+#     using Statistics
+#     ave2 = Array{Float64}(undef, trunc(Int,length(S2Data)/ average_interval ))
+#     axe2 = Array{Float64}(undef, trunc(Int,length(S2Time)/ average_interval ))
+#     for i in 1:length(ave2)
+#         ave2[i] = mean(S2Data[ average_interval *(i-1)+1 : average_interval *(i)])
+#         axe2[i] = mean(S2Time[ average_interval *(i-1)+1 : average_interval *(i)])
+#     end
+#
+#     plot!(axe2,ave2,label = false,lw=4,seriescolor=RGB{Float64}(0.1,0.6,0.9))
+# end
+
+
+
+
+
+#
+# # create directoty to store data in for F0
+# if !("F0" in readdir(parentFolder))
+#     mkdir(parentFolder*raw"\F0")
 # end
 #
-# plot!(axe2,ave2,label = false,lw=4,seriescolor=RGB{Float64}(0.1,0.6,0.9))
-
-
-
-
-
-
-
-# create directoty to store data in for F0
-if !("F0" in readdir(parentFolder))
-    mkdir(parentFolder*raw"\F0")
-end
-
-# save plot to image
-image = parentFolder*raw"\F0\F0.png"
-savefig(image)
-
-# save data to CSV file
-csv_file = parentFolder*raw"\F0\F0_CSV_"
-
-S1CSV = DataFrame([S1Time, S1Data], [:S1Time, :S1])
-S2CSV = DataFrame([S2Time, S2Data], [:S2Time, :S2])
-# CSV.write(csv_file, [S1data S2data])
-CSV.write(csv_file*"S1.csv", S1CSV)
-CSV.write(csv_file*"S2.csv", S2CSV)
+# # save plot to image
+# image = parentFolder*raw"\F0\F0.png"
+# savefig(image)
+#
+# # save data to CSV file
+# csv_file = parentFolder*raw"\F0\F0_CSV_"
+#
+# S1CSV = DataFrame([S1Time, S1Data], [:S1Time, :S1])
+# S2CSV = DataFrame([S2Time, S2Data], [:S2Time, :S2])
+# # CSV.write(csv_file, [S1data S2data])
+# CSV.write(csv_file*"S1.csv", S1CSV)
+# CSV.write(csv_file*"S2.csv", S2CSV)

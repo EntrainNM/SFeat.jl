@@ -5,7 +5,7 @@ using SFeat, TextGrid
 using Plots, CSV, DataFrames
 default(dpi=300)
 # path to gropued directories
-cd(raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Adults\Adults_Finished")
+cd(raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Children\CNT_NEW_Finished\CASD")
 folders = readdir(join=true)
 
 for folder in folders
@@ -118,8 +118,8 @@ for folder in folders
 
     end
 
-    S1CSV = DataFrame([longerTime, longerData, shorterTime, shorterData], [:S1Time, :S1WPM, :S2Time, :S2WPM])
+    WPM_Data = DataFrame([longerTime, longerData, shorterTime, shorterData], [:S1Time, :S1WPM, :S2Time, :S2WPM])
 
-    CSV.write(csv_file*"S1.csv", S1CSV)
+    CSV.write(csv_file*"WPM_Data.csv", WPM_Data)
 
 end

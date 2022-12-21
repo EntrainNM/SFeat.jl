@@ -2,13 +2,13 @@
 # plot WPM for each speaker along with a moving average (averag over 5-segemnt intervals)
 
 using SFeat, TextGrid
-using Plots
-default(dpi=300)
-# path to transcribed TextGrid file
-parentFolder = raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Children\CNT_NEW_Finished\CASD001_07112017\CASD001_07112017.TextGrid"
+using Plots; default(dpi=200)
 
-# TextGridFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".TextGrid" # path to TextGrid file
-interval = extract(parentFolder)
+# path to transcribed TextGrid file
+parentFolder = raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Children\CNT_NEW_Finished\CASD\CASD003_2"
+
+TextGridFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".TextGrid" # path to TextGrid file
+interval = extract(TextGridFile)
 
 
 
@@ -76,7 +76,8 @@ scatter!(S2Time, S2Data,
          label=false
          )
 
-# #  ----------------------------------- storing files
+#  ----------------------------------- storing files
+# using DataFrames, CSV
 # # create directoty to store data in for WPM
 # if !("WPM" in readdir(parentFolder))
 #     mkdir(parentFolder*raw"\WPM")
@@ -94,3 +95,8 @@ scatter!(S2Time, S2Data,
 # # CSV.write(csv_file, [S1data S2data])
 # CSV.write(csv_file*"S1.csv", S1CSV)
 # CSV.write(csv_file*"S2.csv", S2CSV)
+
+
+
+
+#------------- testing

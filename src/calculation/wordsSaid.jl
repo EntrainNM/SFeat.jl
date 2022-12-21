@@ -1,5 +1,5 @@
 using TextGrid
-file = raw"C:\Users\hemad\Desktop\Master\ExtractFeatures\Before_After_Finished\CASD001_MAW_thesis_session_1\CASD001_MAW_thesis_session_1_Transcribed.TextGrid"
+file = raw"C:\Users\hemad\Desktop\Master\ExtractFeatures\testing\CASD001_MAW_thesis_session_1\CASD001_MAW_thesis_session_1.TextGrid"
 interval = extract(file)
 
 #-------------- accociate speaker segments with words

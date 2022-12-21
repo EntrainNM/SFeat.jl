@@ -1,6 +1,7 @@
 
 using SFeat, TextGrid, Plots
 
+
 """
 After extracting featurs using the feature() function, we plot the average F0 for each speaker turn for further analysis.
 
@@ -13,34 +14,39 @@ F0 = map(x -> parse(Float64,x[begin:end-1]),test[:,4])
 features = readFeature(featureFile)
 """
 
-cd(raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Children\CNT_NEW_Finished")
+cd(raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Children\CNT_NEW_Finished\CASD")
 folders = readdir(join=true)
 
-for folder in folders
-    file = folder
+for parentFolder in folders
 
-    featureFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".features" # path .features file
-    features = readFeature(featureFile) # read features
+    folder = readdir(parentFolder, join=true)
+    featureFiles = folder[ endswith.(folder, "features") ]
+
+    # get S1 features (female)
+    S1_gender = "female" # S1 always female
+    female_features = featureFiles[ contains.(featureFiles, "female") ][1]
+
+    features = readFeature(female_features) # read features
     t = features[:,1]
     F0 = features[:,3]
 
+    # feature(raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Children\CNT_NEW_Finished\CASD006_07252018\CASD006_07252018.wav")
 
     #---- for each speaker chunk\interval\segment, get an array of F0 values during the interval
     TextGridFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".TextGrid" # path to TextGrid file
     interval = extract(TextGridFile)
+
     # ------------------ S1
     S1 = interval[1]
     S1Location = [("S1" in S1[i]) for i in 1:length(S1)] # filter segment annoated as "S1" only
     S1 = S1[S1Location] # filtered S1 segments
-
     S1F0Averaged = Vector{Float64}(undef,length(S1)) # initalize 1D array to store averaged F0 for each S1 segment
     S1timeAveraged = Vector{Float64}(undef,length(S1)) # initalize 1D array to store averaged time for each S1 segment
-    # for each S1 segment, calaculate the average F0 (filtering 0.0 out) and store them on S1F0Averaged
+
     for i in 1:length(S1) # for each S1 segment
 
         start = round(S1[i][1], digits=2) # round to nearest 0.01 (default time step)
         finish = round(S1[i][2], digits=2)
-
         # find start and finish location in terms of features vectors
         featureStart = indexin(start, t)[1]
         featureFinish = indexin(finish, t)[1]
@@ -57,45 +63,49 @@ for folder in folders
 
         S1timeAveraged[i] = S1[i][1] + (S1[i][2] - S1[i][1]) / 2 # average time for each segment
     end
-
-
-    #--- plotting S1 data
     S1Time = S1timeAveraged[S1F0Averaged.!=0]
     S1Data = S1F0Averaged[S1F0Averaged.!=0]
 
 
+
     # --------------------------------------- S2
+    try # set S2 a different gender from S1 (anything not female)
+        S2_features = featureFiles[ (!).(contains.(featureFiles, "female")) ][1]
+    catch # if second gender doesn't exist, use female again
+        S2_features = female_features
+    end
+
+    features = readFeature(S2_features) # read features
+    t = features[:,1]
+    F0 = features[:,3]
+
     S2 = interval[5]
     S2Location = [("S2" in S2[i]) for i in 1:length(S2)] # filter segment annoated as "S2" only
     S2 = S2[S2Location] # filtered S2 segments
 
     S2F0Averaged = Vector{Float64}(undef,length(S2)) # initalize 1D array to store averaged F0 for each S2 segment
     S2timeAveraged = Vector{Float64}(undef,length(S2)) # initalize 1D array to store averaged time for each S1 segment
-    # for each S2 segment, calaculate the average F0 (filtering 0.0 out) and store them on S2F0Averaged
-    for i in 1:length(S2) # for each S2 segment
 
+    for i in 1:length(S2) # for each S2 segment
         start = round(S2[i][1], digits=2) # round to nearest 0.01 (default time step)
         finish = round(S2[i][2], digits=2)
-
         # find start and finish location in terms of features vectors
         featureStart = indexin(start, t)[1]
         featureFinish = indexin(finish, t)[1]
-
         intrv = featureStart:featureFinish
-
+        # find F0 locations filtering 0.0 values
         F0Filtered = F0[intrv][ F0[intrv] .!= 0.0 ]
-
         try
             S2F0Averaged[i] = sum(F0Filtered)/length(F0Filtered)
         catch
             S2F0Averaged[i] = 0.0
         end
-
         S2timeAveraged[i] = S2[i][1] + (S2[i][2] - S2[i][1]) / 2 # average time for each segment
     end
-
     S2Time = S2timeAveraged[S2F0Averaged.!=0]
     S2Data = S2F0Averaged[S2F0Averaged.!=0]
+
+
 
 
     # combining S1 and S2 F0 values
@@ -115,6 +125,14 @@ for folder in folders
     p = sortperm([i[2] for i in combined_F0])
 
     combined_F0 = combined_F0[p]
+
+    # print consecutive speaker segments
+    # for i in 2:length(combined_F0)
+    #     if combined_F0[i][3] == combined_F0[i-1][3]
+    #         println(i)
+    #     end
+    # end
+
     # combine consecutive speakers
     i=0
     while (i <= length(combined_F0))
@@ -129,6 +147,11 @@ for folder in folders
             # println("--------------")
         end
     end
+
+
+    combined_F0
+    # println.( [ i for i in combined_F0 ] )[1]
+    # plot([i[2] for i in combined_F0], [i[1] for i in combined_F0])
 
 
 
@@ -165,18 +188,21 @@ for folder in folders
                 append!(ΔS2, sign(S2Next - S2Prev))
                 # ΔS2S1 tells if S1 increased or decresed from previous S2
                 append!(ΔS2S1, sign(S1 - S2Prev))
-                end
-            catch
-                # println("Skip!")
-                nothing
             end
+        catch
+            # println("Skip!")
+            nothing
+        end
     end
 
+    # for i in 1:length(ΔS2)
+    #     println("ΔS2 = ", ΔS2[i], " ΔS2S1 = ", ΔS2S1[i], " Results: ", (ΔS2[i]*ΔS2S1[i]))
+    # end
 
     test = ΔS2.*ΔS2S1
     prob = sum(test[test.>0.0]) / length(test)
 
-    print(file[findlast("\\",file)[1]+1:end], " Results: \n")
-    println("S2 entrained to S1 in terms of F0 ",100.0*prob,"% of the time")
+    print(parentFolder[findlast("\\",parentFolder)[1]+1:end], " Results: ")
+    println("S2 entrained to S1 in terms of F0 ",round(100.0*prob, digits=2),"% of the time")
 
 end
