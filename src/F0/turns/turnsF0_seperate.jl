@@ -16,7 +16,7 @@ F0 = map(x -> parse(Float64,x[begin:end-1]),test[:,4])
 features = readFeature(featureFile)
 """
 # path to audio\feature files
-parentFolder = raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Extra_Data\fix_f0\CASD015_07022019"
+parentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Adults\Adults_Finished\A015_A016"
 folder = readdir(parentFolder, join=true)
 featureFiles = folder[ endswith.(folder, "features") ]
 

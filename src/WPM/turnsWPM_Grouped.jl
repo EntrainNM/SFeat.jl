@@ -5,12 +5,12 @@ using SFeat, TextGrid
 using Plots, CSV, DataFrames
 default(dpi=300)
 # path to gropued directories
-cd(raw"C:\Users\hemad\Desktop\Master\Original_Data_Finished\Children\CNT_NEW_Finished\CASD")
-folders = readdir(join=true)
+folders = readdir(raw"C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CASD", join=true)
 
 for folder in folders
+
+    print("Working on ", folder)
     TextGridFile = folder*folder[findlast('\\', folder):end]*".TextGrid" # path .TextGrid file
-    println("Working on ", TextGridFile)
 
     interval = extract(TextGridFile) # extract infromation from each TextGrid
 
@@ -121,5 +121,7 @@ for folder in folders
     WPM_Data = DataFrame([longerTime, longerData, shorterTime, shorterData], [:S1Time, :S1WPM, :S2Time, :S2WPM])
 
     CSV.write(csv_file*"WPM_Data.csv", WPM_Data)
+
+    println("Finished!")
 
 end

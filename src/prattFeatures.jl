@@ -1,4 +1,4 @@
-using DelimitedFiles, WAV
+using DelimitedFiles, WAV, TextGrid
 
 # Run the CMD from the command function which will create Temp.wav file and extract the raw string information as a Tuple of vectors.
 
@@ -9,8 +9,8 @@ using DelimitedFiles, WAV
 
 
 """
-# feature - given wav file path, return Tuple containing F0 and formants
-
+# f0 - given path to .textgrid file, speaker segment, and gender (f,c, or ,).
+Return 
 inputs:
 
 \t- file: full path to .WAV filemode
@@ -18,70 +18,66 @@ inputs:
 \t- TIME_STEP: default 0.01, the interval (resolution) to read date
 
 """
-function feature(file, gender; savecopy=false, TIME_STEP = 0.01)
-
-    # use the correct praat script based on gender (male, female, child, teen boy, teen girl)
-    gender_flag = ""
-    gender = lowercase(gender)
-    if gender in ["male", "m",'m']
-        path_PraatScript = raw"C:\Users\hemad\.julia\dev\SFeat\src\extraFiles\f0_male.praat"
-        gender_flag = "male"
-    elseif gender in ["female", "f",'f']
-        path_PraatScript = raw"C:\Users\hemad\.julia\dev\SFeat\src\extraFiles\f0_female.praat"
-        gender_flag = "female"
-    elseif gender in ["child", "c",'c']
-        path_PraatScript = raw"C:\Users\hemad\.julia\dev\SFeat\src\extraFiles\f0_child.praat"
-        gender_flag = "child"
+function f0(parentFolder, speaker, gender)
+    # select f0 range based on gender
+    if gender == 'f'
+        min = 150; max = 350;
+    elseif gender == 'c'
+        min = 170; max = 450;
+    elseif gender == 'm'
+        min = 70; max = 250;
+    elseif gender == "default"
+        min = 70; max = 500;
     else
-        error("gender must be specified (male, female, child)")
+        error("gender must be specified (male=>m, female=>f, child=>c)");
     end
 
+    # PATH to TextGrid file
+    wavefile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".wav";
+    x,fs = WAV.wavread(wavefile);
+    x = x / maximum(abs.(x));
+    fs = trunc(Int, fs);
 
-    # read wav file
-    x,fs = WAV.wavread(file)
-    x = x / maximum(abs.(x))
+    # PATH of Praat script
+    praat_exe = raw"C:\Users\hemad\.julia\dev\SFeat\src\praatScript\Praat.exe";
+    praatScript = raw"C:\Users\hemad\.julia\dev\SFeat\src\praatScript\f0.praat";
+    features_path = raw"C:\Users\hemad\.julia\dev\SFeat\src\praatScript\temp.features";
+    temp_wav = raw"C:\Users\hemad\.julia\dev\SFeat\src\praatScript\temp.wav";
+    TIME_STEP = 0.01;
+    
+    f0 = [];
+    for i in speaker
+        WAV.wavwrite(x[trunc(Int,i[1]*fs) : trunc(Int,i[2]*fs),:], temp_wav,
+             Fs=fs, compression=WAVE_FORMAT_PCM, nbits = 16);
 
-    # save wav file with WAVE_FORMAT_PCM/16bits
-    # WAV.wavwrite(x, raw"C:\Users\hemad\.julia\dev\SFeat\src\extraFiles\Temp.wav",
-    #              Fs=fs,
-    #              compression=WAVE_FORMAT_PCM,
-    #              nbits = 16 # this doesn't work with other files than test.wav in WavFiles
-    #              )
-
-    path_PraatExecutable = raw"C:\Users\hemad\.julia\dev\SFeat\src\extraFiles\Praat.exe" # Path to .exe praat file
-
-
-
-
-    temp = raw" Temp.wav "
-    features = raw"Temp.features "
-
-    cmd = path_PraatExecutable * " --run " * path_PraatScript * temp  * features * raw".\ " * string(TIME_STEP)
-
-    print(cmd)
-    # print("""Starting CMD "$cmd"\n""")
-    # # run command on CMD
-    # run(`cmd /k $cmd "&" exit`)
-
-    # remove Temp.wav file
-    # rm(raw"src\extraFiles\Temp.wav", force=true)
-
-    # temporarily solution: use readdlm, remove commas, convert the strings to floats
-    # temp = readFeature(raw"C:\Users\hemad\.julia\dev\SFeat\src\extraFiles\Temp.features") # this contains strings, commas, and numbers
-
-    # if savecopy
-    #     cp(raw"C:\Users\hemad\.julia\dev\SFeat\src\extraFiles\Temp.features",file[begin:findlast('.', file)-1]*gender_flag*".features", force=true)
-    # end
-
-    # try
-    #     rm(raw"C:\Users\hemad\.julia\dev\SFeat\src\extraFiles\Temp.wav")
-    # catch
-    #     nothing
-    # end
-
-    # # return audio file features (Pitch and Formants) tracks in as a Tuple of vectors
-    # track = (t=temp[:,1],voicing=temp[:,2])#,f0=temp[:,3],f1=temp[:,4],f2=temp[:,5],f3=temp[:,6],f4=temp[:,7],f5=temp[:,8],f6=temp[:,9],f7=temp[:,10],f8=temp[:,11],f9=temp[:,12],f10=temp[:,13],f11=temp[:,14],f12=temp[:,15],f13=temp[:,16],f14=temp[:,17],f15=temp[:,18],Formants=temp[:,4:end])
+        cmd = praat_exe * " --run " * praatScript * raw" temp.wav "  * raw"temp.features " * raw".\ " * string(TIME_STEP) * " $min $max";
+        run(`cmd /k $cmd "&" exit`);
+        features = []
+        try
+            features = [readdlm(features_path, ',')[:,2]]
+        catch
+            features = [0]
+        end
+        append!(f0, features);
+    end
+    return f0
 end
+
+
+"""
+# f0_read - given path to .textgrid file.
+Return the stored f0 list for S1 and S2 as tuble
+"""
+function f0_read(parentFolder)
+    temp = readdlm(parentFolder*raw"\f0"*raw"\S1.txt", ' ', skipblanks=true)
+    f0_S1 = [ temp[i,:][ temp[i,:] .!= ""] for i in 1:length(temp[:,1]) ]
+
+    temp = readdlm(parentFolder*raw"\f0"*raw"\S2.txt", ' ', skipblanks=true)
+    f0_S2 = [ temp[i,:][ temp[i,:] .!= ""] for i in 1:length(temp[:,1]) ]
+
+    return (f0_S1, f0_S2)
+end
+
 
 
 """
@@ -95,4 +91,47 @@ function readFeature(file)
            end
     end
     return temp
+end
+
+
+
+function autof0(parentFolder, S)
+    name = parentFolder[findlast("\\",parentFolder)[1]+1:end]
+
+    TextGridFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".TextGrid"; # path to TextGrid file
+    interval = extract(TextGridFile);
+    # find longest segment for a certain speaker S
+    if S==1
+        S1 = interval[1];
+        speaker = S1[map(x -> x[3] == "S1", interval[1])]
+    elseif S==2
+        S2 = interval[5]
+        speaker = S2[map(x -> x[3] == "S2", interval[5])]
+    end
+
+    wavefile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".wav";
+    x,fs = WAV.wavread(wavefile);
+    x = x / maximum(abs.(x));
+    fs = trunc(Int, fs);
+
+    praat_exe = raw"C:\Users\hemad\.julia\dev\SFeat\src\praatScript\Praat.exe";
+    praatScript = raw"C:\Users\hemad\.julia\dev\SFeat\src\praatScript\f0.praat";
+    features_path = raw"C:\Users\hemad\.julia\dev\SFeat\src\praatScript\temp.features";
+    temp_wav = raw"C:\Users\hemad\.julia\dev\SFeat\src\praatScript\temp.wav";
+    TIME_STEP = 0.01;
+
+    i = speaker[findmax([ (i[2]-i[1]) for i in speaker])[2]]
+    WAV.wavwrite(x[trunc(Int,i[1]*fs) : trunc(Int,i[2]*fs),:], temp_wav,Fs=fs,
+                compression=WAVE_FORMAT_PCM, nbits = 16
+    )
+
+    # female settings
+    MN = 75; MX = 500;
+    cmd = praat_exe * " --run " * praatScript * raw" temp.wav "  * raw"temp.features " * raw".\ " * string(TIME_STEP) * " $MN $MX";
+    run(`cmd /k $cmd "&" exit`);
+
+    S_f0 = [readdlm(features_path, ',')[:,2]]
+
+    round(digits=3, sum(S_f0[1]) / length(S_f0[1]))
+
 end
