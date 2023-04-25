@@ -9,18 +9,19 @@ using SFeat, WAV
 
 using Plots
 
+# default(dpi=500, w=2, markersize=4, legend=:outertop, size=(1300,600))
+default(dpi=500, w=0, markersize=1, legend=:outertop, framestyle = :box, grid=false)
+Data = [55.59, 55.81, 58.86]
+Target = ""
 
-default(dpi=300, w=0, markersize=1, legend=:outertop)
-Data = [55.61, 60.33, 61.34]
-Target = "f0"
-
-bar(Data, xticks = ([1,2,3], ["Adults","CASD","CNT"])
-    ,label=false, ylabel=Target,title=Target,
-    xlabel="Control Group",
-    background_color=RGB{Float64}(0.466,0.117,0.560),
-    seriescolor=RGB{Float64}(0.1, .7, .9),
-    guidefontsize=11,tickfontsize=11, bar_width=0.5,
-    text=[("$i", :bottom, RGB{Float64}(0.1, .7, .9), 11) for i in Data]
+bar(Data, xticks = ([1,2,3], ["Adults","CNT","CASD"]),
+    yticks=0:10:70,label=false, ylabel="f0",ylims=(0,65),
+    title=Target,xlabel="Groups",
+    seriescolor=RGB{Float64}(0.1, .2, .6),
+    guidefontsize=12,tickfontsize=9, bar_width=0.5,
+    text=[("$i", :bottom, RGB{Float64}(0.1, .2, .6), 11) for i in Data]
 )
 
-# savefig(raw"C:\Users\hemad\Desktop\Master\Experiments\Exp3\Groups.png")
+# savefig(raw"C:\Users\hemad\Desktop\Master\Experiments\Exp3\f0_Groups.png")
+
+boxplot([[1,4,3,2,2,6], [1,7,1,5,9,6]])

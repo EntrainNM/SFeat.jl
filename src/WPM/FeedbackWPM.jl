@@ -4,7 +4,7 @@
 using SFeat, TextGrid
 # path to transcribed TextGrid file
 # CASD019_07182019_Transcribed 80 entrainment
-parentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Adults\Adults_Finished\A043_A044"
+parentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Adults\Adults_Finished\A003_A004"
 
 TextGridFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".TextGrid" # path to TextGrid file
 interval = extract(TextGridFile)
@@ -75,11 +75,13 @@ We also set ΔS2S1=(S1 - S2Prev) (does S1 gain or lose WPM from the last S2 segm
 # comparing previous turns - S2 based on S1
 prevS1WPM, prevS2WPM = 0.0, 0.0
 ΔS2 = []; ΔS2S1 = []
-skipped = 0
+total_turns = 0
+discard = 0
 # assuming there is no consecutive speakers (S1 alwasy followed by S2 segment) since consecutive speakers were removed eariler
 for i in 2:length(orderedTurns)
     try
         if orderedTurns[i][6] == "S1" # if S1 segment
+            total_turns += 1
             if ((orderedTurns[i-1][7] != 0.0) & (orderedTurns[i][7] != 0.0) & (orderedTurns[i+1][7] != 0.0))
                 S2Prev = round(orderedTurns[i-1][7],digits=3)
                 S1 = round(orderedTurns[i][7],digits=3)
@@ -92,7 +94,7 @@ for i in 2:length(orderedTurns)
                 orderedTurns[i][6]," WPM = ",S1, " (3) ", orderedTurns[i+1][6],
                 " WPM = ", S2Next," ==> ", sign(S2Next - S2Prev)*sign(S1 - S2Prev))
             else
-                skipped += 1
+                discard += 1
             end
         end
     catch
@@ -106,9 +108,12 @@ results = ΔS2.*ΔS2S1
 prob = sum(results[results.>0.0]) / length(results)
 
 print(parentFolder[findlast("\\",parentFolder)[1]+1:end], " Results: \n")
-println("S2 entrained to S1 ",100.0*prob,"% of the time | $skipped")
+println("S2 entrained to S1 ",100.0*prob,"% of the time || skipped turns: $discard\\$total_turns")
 
 
 # for i in 1:length(ΔS2)
 #     println("ΔS2 = ", ΔS2[i], " ΔS2S1 = ", ΔS2S1[i], " Results: ", (ΔS2[i]*ΔS2S1[i]))
 # end
+
+# sum([i[7] for i in orderedTurns] .== 0)
+# sum([i[6] for i in orderedTurns] .== "S1")

@@ -8,7 +8,7 @@ Given locations to TextGrid file (containings the corresponding gender.txt and w
 
 gender.txt file contains two letters on line 1 corresponding to sex of speaker (F, M, and C)
 =#
-parentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CASD\CASD015_07022019"
+parentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CASD\CASD020_07172019"
 
 # START FUNCTION HERE feature(parentFolder; savecopy=false, TIME_STEP = 0.01)
 TextGridFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".TextGrid"; # path to TextGrid file

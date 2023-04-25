@@ -95,12 +95,15 @@ end
 
 
 
-function autof0(parentFolder, S)
-    name = parentFolder[findlast("\\",parentFolder)[1]+1:end]
 
+function autof0(parentFolder, S)
+    # f0 default settings
+    MN = 75; MX = 500;
+
+    name = parentFolder[findlast("\\",parentFolder)[1]+1:end]
     TextGridFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".TextGrid"; # path to TextGrid file
     interval = extract(TextGridFile);
-    # find longest segment for a certain speaker S
+
     if S==1
         S1 = interval[1];
         speaker = S1[map(x -> x[3] == "S1", interval[1])]
@@ -120,18 +123,30 @@ function autof0(parentFolder, S)
     temp_wav = raw"C:\Users\hemad\.julia\dev\SFeat\src\praatScript\temp.wav";
     TIME_STEP = 0.01;
 
-    i = speaker[findmax([ (i[2]-i[1]) for i in speaker])[2]]
-    WAV.wavwrite(x[trunc(Int,i[1]*fs) : trunc(Int,i[2]*fs),:], temp_wav,Fs=fs,
-                compression=WAVE_FORMAT_PCM, nbits = 16
-    )
+    # find longest segment for a certain speaker S
+    p = sortperm([ (i[2]-i[1]) for i in speaker])
+    average_5 = []
 
-    # female settings
-    MN = 75; MX = 500;
-    cmd = praat_exe * " --run " * praatScript * raw" temp.wav "  * raw"temp.features " * raw".\ " * string(TIME_STEP) * " $MN $MX";
-    run(`cmd /k $cmd "&" exit`);
+    for i in 5:-1:0
+        order = speaker[p][end-i]
+        WAV.wavwrite(x[trunc(Int,order[1]*fs) : trunc(Int,order[2]*fs),:], temp_wav,Fs=fs,
+                    compression=WAVE_FORMAT_PCM, nbits = 16
+        )
+    
+        cmd = praat_exe * " --run " * praatScript * raw" temp.wav "  * raw"temp.features " * raw".\ " * string(TIME_STEP) * " $MN $MX";
+        run(`cmd /k $cmd "&" exit`);
 
-    S_f0 = [readdlm(features_path, ',')[:,2]]
+        try
+            S_f0 = [readdlm(features_path, ',')[:,2]]
+        temp = round(digits=3, sum(S_f0[1]) / length(S_f0[1]))
+    
+        append!(average_5, temp)
+        catch
+            nothing
+        end
+        
+    end
 
-    round(digits=3, sum(S_f0[1]) / length(S_f0[1]))
+    sum(average_5) / length(average_5)
 
 end

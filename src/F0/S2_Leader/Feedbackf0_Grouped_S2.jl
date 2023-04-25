@@ -1,19 +1,4 @@
-
 using SFeat, TextGrid
-
-
-"""
-After extracting featurs using the feature() function, we plot the average F0 for each speaker turn for further analysis.
-
-# first method to extract features
-test = readdlm(featureFile, ' ')
-t = map(x -> parse(Float64,x[begin:end-1]),test[:,2])
-F0 = map(x -> parse(Float64,x[begin:end-1]),test[:,4])
-
-# second method
-features = readFeature(featureFile)
-"""
-
 parentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Adults\Adults_Finished"
 folders = readdir(parentFolder, join=true)
 
@@ -48,8 +33,7 @@ for parentFolder in folders
     turns  = [turns[i,:] for i in 1:length(turns[:,1])] # convert matrix into array of arrays
     p = sortperm([i[2] for i in turns]) # sort turns according to start time
     combined_F0 = turns[p] # S1 and S2 combined
-    
-    
+
     # combine consecutive speakers
     i=0
     while (i <= length(combined_F0))
@@ -63,24 +47,24 @@ for parentFolder in folders
             i = 1 # go back to begining
         end
     end
-    
+
     # comparing previous turns - S2 based on S1
-    ΔS2 = []; ΔS2S1 = []
+    ΔS1 = []; ΔS1S2 = []
     total_turns = 0
     discard = 0
-
     # assuming there is no consecutive speakers (S1 alwasy followed by S2 segment)
     for i in 2:length(combined_F0)
         try
-            if combined_F0[i][3] == "S1" # if S1 speaking
+            if combined_F0[i][3] == "S2" # if S1 segment
                 total_turns += 1
                 if ((combined_F0[i-1][1] != 0.0) & (combined_F0[i][1] != 0.0) & (combined_F0[i+1][1] != 0.0))
-                    S2Prev = round(combined_F0[i-1][1],digits=3)
-                    S1 = round(combined_F0[i][1],digits=3)
-                    S2Next = round(combined_F0[i+1][1],digits=3)
-
-                    append!(ΔS2, sign(S2Next - S2Prev))# ΔS2 tells if S2 increased or decresed WPM from last S2 segment
-                    append!(ΔS2S1, sign(S1 - S2Prev))# ΔS2S1 tells if S1 increased or decresed from previous S2
+                    S1Prev = round(combined_F0[i-1][1],digits=3)
+                    S2 = round(combined_F0[i][1],digits=3)
+                    S1Next = round(combined_F0[i+1][1],digits=3)
+    
+                    append!(ΔS1, sign(S1Next - S1Prev))# ΔS1 tells if S1 increased or decresed WPM from last S1 segment
+                    append!(ΔS1S2, sign(S2 - S1Prev))# ΔS1S2 tells if S2 increased or decresed from previous S1
+                    
                 else
                     discard += 1
                 end
@@ -89,32 +73,20 @@ for parentFolder in folders
             nothing
         end
     end
-    
-    
-    results = ΔS2.*ΔS2S1
+
+
+    results = ΔS1.*ΔS1S2
     prob = round( digits=2, sum(results[results.>0.0]) / length(results) * 100)
-    
-    # print(parentFolder[findlast("\\",parentFolder)[1]+1:end], " Results: ")
 
-
-    name = TextGridFile[findlast("\\",TextGridFile)[1]+1:findlast(".",TextGridFile)[1]-1]
-    # println(name, " S1 entrained to S2 ", prob," of the time || skipped turns: $discard\\$total_turns")
-    # println("$cn & $prob\\ & $total_turns & $discard \\\\")
-    if '_' in name
-        first_speaker = name[begin:findlast("_",name)[1]-1]
-        second_speaker = name[findlast("_",name)[1]+1:end]
-    else
-        first_speaker = name
-        second_speaker = "-"
-    end
-    println("$first_speaker $second_speaker $prob $total_turns $discard")
+    # println(parentFolder[findlast("\\",parentFolder)[1]+1:end], " S1 entrained to S2 ", prob,"% of the time || skipped turns: $discard\\$total_turns")
+    # println("$cn & $prob & $total_turns & $discard \\\\")
+    println(prob)
 
     append!(average, prob)
     append!(turns_all,total_turns)
     append!(discard_all,discard)
 end
 
-
-println("S2 entraied to S1: ", round(digits= 2,sum(average) / length(average)),"%")
+println("S1 entraied to S2: ", round(digits= 2,sum(average) / length(average)),"%")
 
 println(sum(turns_all)," ",sum(discard_all)," ", round(digits=2,100*sum(discard_all)/sum(turns_all)), "%")

@@ -12,7 +12,7 @@ function gender(parentFolder)
 end
 
 
-folders = readdir(raw"C:\Users\hemad\Desktop\Master\Data\Adults\Adults_Finished", join=true)
+folders = readdir(raw"C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CASD", join=true)
 
 results = Array{Any}(undef, length(folders),5)
 
@@ -21,15 +21,14 @@ for (index, parentFolder) in enumerate(folders)
     S2_f0 = autof0(parentFolder, 2);
     name = parentFolder[findlast("\\",parentFolder)[1]+1:end]
 
-y
     g = gender(parentFolder)
-    results[index,:] = [name g[1] S1_f0 g[2] S2_f0]
+    results[index,:] = [name g[1] round.(digits=3,S1_f0) g[2] round.(digits=3,S2_f0)]
 
     # println("average f0 of $name = $S_f0 Hz")
 end
 results
 
-open(raw"C:\Users\hemad\Desktop\Master\Experiments\Exp3\Adult_autof0.txt", "w") do io
+open(raw"C:\Users\hemad\Desktop\Master\Experiments\Exp3\CASD_autof0.txt", "w") do io
     writedlm(io, results, " ")
 end
 

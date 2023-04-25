@@ -1,10 +1,14 @@
 using SFeat, TextGrid
 # path to transcribed TextGrid file
-parentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CASD"
+parentFolder = rawparentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CNT"
 folders = readdir(parentFolder, join=true)
 
+cn = 0
 average = []
+discard_all = []
+turns_all = []
 for folder in folders
+    cn+=1
     file = folder*folder[findlast("\\",folder)[1] : end]*".TextGrid"
     interval = extract(file)
 
@@ -41,22 +45,27 @@ for folder in folders
     # comparing previous turns - S2 based on S1
     prevS1WPM, prevS2WPM = 0.0, 0.0
     ΔS1 = []; ΔS1S2 = []
-
+    total_turns = 0
+    discard = 0
     # assuming there is no consecutive speakers (S1 alwasy followed by S2 segment)
     for i in 2:length(orderedTurns)
         try
-    
             if orderedTurns[i][6] == "S2" # if S2 segment
-                S1Prev = round(orderedTurns[i-1][7],digits=3)
-                S2 = round(orderedTurns[i][7],digits=3)
-                S1Next = round(orderedTurns[i+1][7],digits=3)
-    
-                # println("(1) ", orderedTurns[i-1][6]," WPM = ", S1Prev, " (2) ",
-                # orderedTurns[i][6]," WPM = ", S2, " (3) ", orderedTurns[i+1][6],
-                # " WPM = ", S1Next," ==> ", sign(S1Next - S1Prev)*sign(S2 - S1Prev))
-    
-                append!(ΔS1, sign(S1Next - S1Prev))# ΔS1 tells if S1 increased or decresed WPM from last S1 segment
-                append!(ΔS1S2, sign(S2 - S1Prev))# ΔS1S2 tells if S2 increased or decresed from previous S1
+                total_turns += 1
+                if ((orderedTurns[i-1][7] != 0.0) & (orderedTurns[i][7] != 0.0) & (orderedTurns[i+1][7] != 0.0))
+                    S1Prev = round(orderedTurns[i-1][7],digits=3)
+                    S2 = round(orderedTurns[i][7],digits=3)
+                    S1Next = round(orderedTurns[i+1][7],digits=3)
+                    
+                    # println("(1) ", orderedTurns[i-1][6]," WPM = ", S1Prev, " (2) ",
+                    # orderedTurns[i][6]," WPM = ", S2, " (3) ", orderedTurns[i+1][6],
+                    # " WPM = ", S1Next," ==> ", sign(S1Next - S1Prev)*sign(S2 - S1Prev))
+                    
+                    append!(ΔS1, sign(S1Next - S1Prev))# ΔS1 tells if S1 increased or decresed WPM from last S1 segment
+                    append!(ΔS1S2, sign(S2 - S1Prev))# ΔS1S2 tells if S2 increased or decresed from previous S1
+                else
+                    discard += 1
+                end
             end
             catch
                 nothing
@@ -65,11 +74,14 @@ for folder in folders
 
 
     results = ΔS1.*ΔS1S2
-    prob = round(digits=2, sum(results[results.>0.0]) / length(results) * 100 )
+    prob = round( digits=2, sum(results[results.>0.0]) / length(results) * 100)
 
-    println(file[findlast("\\",file)[1]+1:end], " S1 entrained to S2 ", prob,"% of the time")
+    # println(file[findlast("\\",file)[1]+1:end], " S1 entrained to S2 ", prob,"% of the time")
+    println("$cn & $prob & $total_turns & $discard \\\\")
 
     append!(average, prob)
+    append!(turns_all,total_turns)
+    append!(discard_all,discard)
 end
 
 println("S1 entraied to S2: ", sum(average) / length(average),"%")

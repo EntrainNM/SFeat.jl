@@ -3,7 +3,7 @@ using DelimitedFiles
 using TextGrid
 using WAV
 
-Folder = readdir(raw"C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CNT", join=true)
+Folder = readdir(raw"C:\Users\hemad\Desktop\Master\Data\Adults\Adults_Finished", join=true)
 
 for parentFolder in Folder
     TextGridFile = parentFolder*parentFolder[findlast('\\', parentFolder):end]*".TextGrid"; # path to TextGrid file

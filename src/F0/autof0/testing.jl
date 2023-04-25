@@ -54,4 +54,3 @@ sum(average_five) / length(average_five)
 
 # plot(S_f0[1], title=length(S_f0[1]))
 
-

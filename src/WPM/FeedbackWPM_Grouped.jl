@@ -2,16 +2,20 @@ using SFeat, TextGrid
 # path to transcribed TextGrid file
 # "C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CNT"
 # "C:\Users\hemad\Desktop\Master\Data\Adults\Adults_Finished"
-parentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CASD"
+# "C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CASD"
+parentFolder = raw"C:\Users\hemad\Desktop\Master\Data\Adults\Adults_Finished"
 folders = readdir(parentFolder, join=true)
 
+cn = 0
 average = []
+discard_all = []
+turns_all = []
 for folder in folders
+    cn+=1
     file = folder*folder[findlast("\\",folder)[1] : end]*".TextGrid"
     interval = extract(file)
 
     S1Words = wordSegments(interval,1); S2Words = wordSegments(interval,2);
-
 
     #--------------- experiment 1: extracting WPS for S1 (turn taking)
     # for each turn (S1 segment) calaculate WPS for that segment
@@ -68,12 +72,13 @@ for folder in folders
                     S2Prev = round(orderedTurns[i-1][7],digits=3)
                     S1 = round(orderedTurns[i][7],digits=3)
                     S2Next = round(orderedTurns[i+1][7],digits=3)
-
+    
                     append!(ΔS2, sign(S2Next - S2Prev))# ΔS2 tells if S2 increased or decresed WPM from last S2 segment
                     append!(ΔS2S1, sign(S1 - S2Prev))# ΔS2S1 tells if S1 increased or decresed from previous S2
+                    
                 else
                     discard += 1
-                end                
+                end
             end
         catch
             nothing
@@ -84,11 +89,24 @@ for folder in folders
     results = ΔS2.*ΔS2S1
     prob = round( digits=2, sum(results[results.>0.0]) / length(results) * 100)
 
-    total_length = length(orderedTurns)
+    name = file[findlast("\\",file)[1]+1:findlast(".",file)[1]-1]
+    # println(name, " S1 entrained to S2 ", prob," of the time || skipped turns: $discard\\$total_turns")
+    # println("$cn & $prob\\ & $total_turns & $discard \\\\")
+    if '_' in name
+        first_speaker = name[begin:findlast("_",name)[1]-1]
+        second_speaker = name[findlast("_",name)[1]:end]
+    else
+        first_speaker = second_speaker = name
+    end
 
-    println(file[findlast("\\",file)[1]+1:end], " S1 entrained to S2 ", prob,"% of the time || skipped turns: $discard\\$total_turns")
+    println(first_speaker, second_speaker)
+    
 
     append!(average, prob)
+    append!(turns_all,total_turns)
+    append!(discard_all,discard)
 end
 
 println("S2 entraied to S1: ", round(digits= 2,sum(average) / length(average)),"%")
+
+# println(sum(turns_all)," ",sum(discard_all)," ", round(digits=2,100*sum(discard_all)/sum(turns_all)), "%")

@@ -108,8 +108,11 @@ using SFeat
 
 
 # # # #-----------
-# parentFolder = readdir(raw"C:\Users\hemad\Desktop\Master\Data\Children\CNT_NEW_Finished\CNT", join=true)
-# file = raw"C:\Users\hemad\Desktop\Master\Data\Extra_Data\gender.txt"
-# for folder in parentFolder
-#     cp(file,folder*raw"\gender.txt")
+# parentFolder = raw"C:\Users\hemad\Desktop\Master\Experiments\Exp1\data\Adults"
+# All = readdir(parentFolder, join=true)
+
+# for file in All
+#     name = file[findlast("\\",file)[1] : findlast(".",file)[1]-1]
+#     mkpath(parentFolder*name)
+#     mv(file, parentFolder*name*name*".TextGrid")
 # end
