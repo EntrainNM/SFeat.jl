@@ -11,6 +11,7 @@ TextGrid = "b3fd5a2a-ce2b-4381-a881-82dfe75a21a5"
 WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 
 [compat]
+CSV = "0.10"
 julia = "1"
 
 [extras]
