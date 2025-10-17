@@ -1,7 +1,7 @@
 name = "SFeat"
 uuid = "50947f9d-e2fc-43d5-afd8-eae7f8ef8f4c"
-authors = ["Hasan Al-shammari"]
 version = "0.1.0"
+authors = ["Hasan Al-shammari"]
 
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
@@ -11,6 +11,7 @@ TextGrid = "b3fd5a2a-ce2b-4381-a881-82dfe75a21a5"
 WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 
 [compat]
+DataFrames = "1"
 julia = "1"
 
 [extras]
